@@ -3,7 +3,7 @@ import java.util.Properties;
 public class Elev {
 
     public static void main(String[]args){
-    //read from args[0] and configure the following elements:
+        //read from args[0] and configure the following elements:
         /*
          * structures          default = linked
          * floors              default = 32
@@ -13,9 +13,10 @@ public class Elev {
          * duration            default = 500
          */
 
-        Properites structures = new Properties("linked");
-
         if (args[0] != null){
+            FileReader reader = new FileReader(args[0]);
+            Properties prop = new Properties();
+            prop.load(reader);
 
         }
 
