@@ -2,9 +2,10 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.Queue;
 
 class Elevators {
-    //todo: set semi-configurable states/values
+    //todo: set semi-configurable states/values, constructor
     /*
      * curr_floor,  current floor position
      * num_pass,    number of passengers
@@ -25,8 +26,7 @@ class Floors {
 
     Queue pass_pending;
 
-    public Floors Floors(){
-        ArrayList pass = new ArrayList();
+    public Floors Floors(){//todo: constructor
     }
 
     public void gen_pass(int floors, int passengers){
