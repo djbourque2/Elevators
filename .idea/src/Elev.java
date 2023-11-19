@@ -6,7 +6,7 @@ import java.util.Queue;
 
 class Lnode {
     int num;
-    public Lnode next;
+    Lnode next;
 
     public Lnode(int num){
         this.num = num;
@@ -23,7 +23,7 @@ class Lnode {
 }
 
 class LinkedQ {
-    Lnode front, back;
+    public Lnode front, back;
     public LinkedQ(){
         front = null;
         back = null;
@@ -40,10 +40,15 @@ class LinkedQ {
         }
     }
 
-    public void deQueue(){
-        front = front.next;
+    public int deQueue(){
+        int ret = front.num;
+        this.front = this.front.next;
+        return ret;
     }
 
+    public int peek(){
+        return front.num;
+    }
 }
 
 class ArrayQ {
@@ -115,30 +120,34 @@ public class Elev {
         int elev_Cap = 10; //elevatorCapacity
         int dur = 500; //duration
 
-        Floor floor1 = new Floor();
+        LinkedQ n = new LinkedQ();
+        n.enQueue(1);
+        System.out.println(n.peek());
+        n.enQueue(2);
+        System.out.println(n.peek());
+        n.deQueue();
+        System.out.println(n.peek());
 
-        floor1.pass_pending.add(1);
 
-        if (args != null){
-            try (FileReader reader = new FileReader(args[0])){
+        try (FileReader reader = new FileReader(args[0])){
+            Properties prop = new Properties();
+            prop.load(reader);
 
-                Properties prop = new Properties();
-                prop.load(reader);
+            if (prop.containsKey("floors")) floors = Integer.parseInt(prop.getProperty("floors"));
+            if (prop.containsKey("passengers")) psgr = Double.parseDouble(prop.getProperty("passengers"));
+            if (prop.containsKey("elevators")) elev_num = Integer.parseInt(prop.getProperty("elevators"));
+            if (prop.containsKey("elevatorCapacity")) elev_Cap = Integer.parseInt(prop.getProperty("elevatorCapacity"));
+            if (prop.containsKey("duration")) dur = Integer.parseInt(prop.getProperty("duration"));
 
-                if (prop.containsKey("floors")) floors = (int) prop.get("floors");
-                if (prop.containsKey("passengers")) psgr = (double) prop.get("passengers");
-                if (prop.containsKey("elevators")) elev_num = (int) prop.get("elevators");
-                if (prop.containsKey("elevatorCapacity")) elev_Cap = (int) prop.get("elevatorCapacity");
-                if (prop.containsKey("duration")) dur = (int) prop.get("duration");
+            if (prop.containsKey("structures")) structures = prop.getProperty("structures");
+            //todo: set a flag that tells whether or not to use linked structures or array structures
 
-                if (prop.containsKey("structures")) structures = (String) prop.get("structures");
-                //todo: set a flag that tells whether or not to use linked structures or array structures
-
-            } catch (FileNotFoundException e) {
-                //continue as normal
-            } catch (IOException e) {
-                //continue as normal
-            }
+        } catch (FileNotFoundException e) {
+            //continue as normal
+        } catch (IOException e) {
+            //continue as normal
+        } catch (ArrayIndexOutOfBoundsException e) {
+            //continue as normal
         }
     }
 }
