@@ -4,6 +4,48 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Queue;
 
+class Lnode {
+    int num;
+    protected Lnode next;
+
+    Lnode(int num){
+        this.num = num;
+        next = null;
+    }
+
+    Lnode getNext(){
+        return next;
+    }
+
+    void setNext(Lnode n){
+        next = n;
+    }
+}
+
+class LinkedQ {
+    Lnode front, back;
+    public LinkedQ(){
+        front = null;
+        back = null;
+    }
+
+    public void enQueue(int pass){
+        Lnode f = new Lnode(pass);
+        if (front == null){
+            front = f;
+            back = front;
+        } else {
+            back.setNext(f);//todo: ????????????
+
+        }
+    }
+
+}
+
+class ArrayQ {
+    int front, back, cap;
+}
+
 class Elevators {
     //todo: set semi-configurable states/values, constructor
     /*
@@ -11,10 +53,22 @@ class Elevators {
      * num_pass,    number of passengers
      * max_pass,    maximum number of passengers
      */
-    // pass-floor_stack,  determines the order in which the passengers are dropped off first
+    // passFloor_stack,  determines the order in which the passengers are dropped off first
+    // queue state, determines whether passFloor_ is array-based or link-based,
+    int curr_floor, num_pass, max_pass;
+    boolean q_state;
+    //Queue<Integer> passFloor_stack;//todo: make array versions and linked versions
+
+
+    public Elevators(int curr_floor, int num_pass, int max_pass, boolean q_state){
+        this.curr_floor = curr_floor;
+        this.num_pass = num_pass;
+        this.max_pass = max_pass;
+        this.q_state = q_state;
+    }
 }
 
-class Floors {
+class Floor {
     //use case: in an array/linked list, where an elevator iterates forward/backward through the array to simulate moving
     /*
      * pass_pending,    queue for waiting passengers
@@ -24,9 +78,10 @@ class Floors {
                     to the pass_pending stack
      */
 
-    Queue pass_pending;
+    Queue<Integer> pass_pending;
 
-    public Floors Floors(){//todo: constructor
+    public Floor(){//todo: constructor
+        pass_pending = new PriorityQueue<Integer>();
     }
 
     public void gen_pass(int floors, int passengers){
@@ -56,9 +111,9 @@ public class Elev {
         int elev_Cap = 10; //elevatorCapacity
         int dur = 500; //duration
 
-        Floors floors1;
+        Floor floor1 = new Floor();
 
-        floors1.pass_pending.add(1);
+        floor1.pass_pending.add(1);
 
         if (args[0] != null){
             try (FileReader reader = new FileReader(args[0])){
