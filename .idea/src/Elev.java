@@ -6,18 +6,18 @@ import java.util.Queue;
 
 class Lnode {
     int num;
-    protected Lnode next;
+    public Lnode next;
 
-    Lnode(int num){
+    public Lnode(int num){
         this.num = num;
-        next = null;
+        this.next = null;
     }
 
-    Lnode getNext(){
+    public Lnode getNext(){
         return next;
     }
 
-    void setNext(Lnode n){
+    public void setNext(Lnode n){
         next = n;
     }
 }
@@ -35,9 +35,13 @@ class LinkedQ {
             front = f;
             back = front;
         } else {
-            back.setNext(f);//todo: ????????????
-
+            back.setNext(f);//todo: find out why this isn't working
+            back = f;
         }
+    }
+
+    public void deQueue(){
+        front = front.next;
     }
 
 }
@@ -115,7 +119,7 @@ public class Elev {
 
         floor1.pass_pending.add(1);
 
-        if (args[0] != null){
+        if (args != null){
             try (FileReader reader = new FileReader(args[0])){
 
                 Properties prop = new Properties();
