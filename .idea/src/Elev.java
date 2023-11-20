@@ -4,6 +4,12 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Queue;
 
+class Q {//this is a parent class that will give me more flexibility in my queue implementations
+    public void enQueue(int i){}
+    public int deQueue(){return 0;}
+    public int peek(){return 0;}
+}
+
 class Lnode {
     int num;
     Lnode next;
@@ -22,7 +28,7 @@ class Lnode {
     }
 }
 
-class LinkedQ {
+class LinkedQ extends Q{
     public Lnode front, back;
     public LinkedQ(){
         front = null;
@@ -51,8 +57,42 @@ class LinkedQ {
     }
 }
 
-class ArrayQ {
+class ArrayQ extends Q{
     int front, back, cap;
+    int[] arr;
+
+    public ArrayQ(int cap){
+        front = 0;
+        back = 0;
+        this.cap = cap;
+        arr = new int[cap];
+    }
+
+    public void enQueue(int n){
+        if (back < cap){
+            arr[back] = n;
+            back++;
+        }
+    }
+    public int deQueue(){
+        int ret = arr[front];
+        if (front == back){
+            return -1;
+        } else {
+            for (int i = 0; i < back-1; i++) {
+                arr[i] = arr[i-1];
+            }
+            if (back < cap){
+                arr[back] = 0;
+            }
+            back--;
+        }
+        return front;
+    }
+
+    public int peek(){
+        return arr[front];
+    }
 }
 
 class Elevators {
@@ -67,6 +107,7 @@ class Elevators {
     int curr_floor, num_pass, max_pass;
     boolean q_state;
     //Queue<Integer> passFloor_stack;//todo: make array versions and linked versions
+    Q passFloor_stack;
 
 
     public Elevators(int curr_floor, int num_pass, int max_pass, boolean q_state){
@@ -74,6 +115,11 @@ class Elevators {
         this.num_pass = num_pass;
         this.max_pass = max_pass;
         this.q_state = q_state;
+        if (q_state){
+            passFloor_stack = new ArrayQ(max_pass);
+        } else {
+            passFloor_stack = new LinkedQ();
+        }
     }
 }
 
@@ -87,16 +133,20 @@ class Floor {
                     to the pass_pending stack
      */
 
-    Queue<Integer> pass_pending;
+    Q pass_pending;
 
-    public Floor(){//todo: constructor
-        pass_pending = new PriorityQueue<Integer>();
+    public Floor(boolean s, int cap){//if true, array, if false, linked
+        if (s){
+            pass_pending = new ArrayQ(cap);
+        } else {
+            pass_pending = new LinkedQ();
+        }
     }
 
     public void gen_pass(int floors, int passengers){
         Random rand = new Random();
         if (rand.nextDouble() <= passengers){
-            pass_pending.add(rand.nextInt(floors + 1) + 0);
+            pass_pending.enQueue(rand.nextInt(floors + 1) + 0);
         }
     }
 }
@@ -104,14 +154,14 @@ class Floor {
 public class Elev {
     public static void main(String[]args) {
         //read from args[0] and configure the following elements:
-        /*
+        /**
          * structures          default = linked
          * floors              default = 32
          * passengers          default = 0.03
          * elevators           default = 1
          * elevatorCapacity    default = 10
          * duration            default = 500
-         */
+        **/
 
         String structures = "linked";
         int floors = 32; //floors
@@ -120,7 +170,9 @@ public class Elev {
         int elev_Cap = 10; //elevatorCapacity
         int dur = 500; //duration
 
-        LinkedQ n = new LinkedQ();
+        boolean state;
+
+        ArrayQ n = new ArrayQ(10);
         n.enQueue(1);
         System.out.println(n.peek());
         n.enQueue(2);
@@ -141,6 +193,11 @@ public class Elev {
 
             if (prop.containsKey("structures")) structures = prop.getProperty("structures");
             //todo: set a flag that tells whether or not to use linked structures or array structures
+            if (structures.equals("linked")){
+                state = false;
+            } else {
+                state = true;
+            }
 
         } catch (FileNotFoundException e) {
             //continue as normal
@@ -149,5 +206,7 @@ public class Elev {
         } catch (ArrayIndexOutOfBoundsException e) {
             //continue as normal
         }
+
+
     }
 }
