@@ -4,19 +4,21 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Queue;
 
-class Q {//this is a parent class that will give me more flexibility in my queue implementations
-    public void enQueue(int i){}
-    public int deQueue(){return 0;}
-    public int peek(){return 0;}
+class Q {//this is an unused/template parent class that will give more flexibility in adaptive queue implementations
+    public void enQueue(Object i){}
+    public Object deQueue(){return 0;}
+    public Object peek(){return 0;}
 }
 
 class Lnode {
-    int num;
+    Object obj;
     Lnode next;
+    Lnode prev;
 
-    public Lnode(int num){
-        this.num = num;
+    public Lnode(Object obj){//remember to always tie in Lnodes correctly
+        this.obj = obj;
         this.next = null;
+        this.prev = null;
     }
 
     public Lnode getNext(){
@@ -25,6 +27,7 @@ class Lnode {
 
     public void setNext(Lnode n){
         next = n;
+        n.prev = next;
     }
 }
 
@@ -35,7 +38,7 @@ class LinkedQ extends Q{
         back = null;
     }
 
-    public void enQueue(int pass){
+    public void enQueue(Object pass){
         Lnode f = new Lnode(pass);
         if (front == null){
             front = f;
@@ -46,38 +49,38 @@ class LinkedQ extends Q{
         }
     }
 
-    public int deQueue(){
-        int ret = front.num;
+    public Object deQueue(){
+        Object ret = front.obj;
         this.front = this.front.next;
         return ret;
     }
 
-    public int peek(){
-        return front.num;
+    public Object peek(){
+        return front.obj;
     }
 }
 
 class ArrayQ extends Q{
     int front, back, cap;
-    int[] arr;
+    Object[] arr;
 
     public ArrayQ(int cap){
         front = 0;
         back = 0;
         this.cap = cap;
-        arr = new int[cap];
+        arr = new Object[cap];
     }
 
-    public void enQueue(int n){
+    public void enQueue(Object n){
         if (back < cap){
             arr[back] = n;
             back++;
         }
     }
-    public int deQueue(){
-        int ret = arr[front];
+    public Object deQueue(){
+        Object ret = arr[front];
         if (front == back){
-            return -1;
+            return null;
         } else {
             for (int i = 0; i < back-1; i++) {
                 arr[i] = arr[i-1];
@@ -90,7 +93,7 @@ class ArrayQ extends Q{
         return front;
     }
 
-    public int peek(){
+    public Object peek(){
         return arr[front];
     }
 }
@@ -99,13 +102,14 @@ class Elevators {
     //todo: set semi-configurable states/values, constructor
     /*
      * curr_floor,  current floor position
+     * curr_direct, current direction (up = true, down = false)
      * num_pass,    number of passengers
      * max_pass,    maximum number of passengers
      */
     // passFloor_stack,  determines the order in which the passengers are dropped off first
     // queue state, determines whether passFloor_ is array-based or link-based,
     int curr_floor, num_pass, max_pass;
-    boolean q_state;
+    boolean curr_direct, q_state;
     //Queue<Integer> passFloor_stack;//todo: make array versions and linked versions
     Q passFloor_stack;
 
@@ -115,11 +119,16 @@ class Elevators {
         this.num_pass = num_pass;
         this.max_pass = max_pass;
         this.q_state = q_state;
+        curr_direct = true;
         if (q_state){
             passFloor_stack = new ArrayQ(max_pass);
         } else {
             passFloor_stack = new LinkedQ();
         }
+    }
+
+    public void change_direction(){
+        curr_direct = !curr_direct;
     }
 }
 
@@ -129,7 +138,7 @@ class Floor {
      * pass_pending,    queue for waiting passengers
      */
     /* functions:
-        gen_pass()  takes the passengers chance + others as parameters to add a new passenger (represented as an int)
+          gen_pass()  takes the passengers chance + others as parameters to add a new passenger (represented as an int)
                     to the pass_pending stack
      */
 
@@ -142,16 +151,17 @@ class Floor {
             pass_pending = new LinkedQ();
         }
     }
+}
 
-    public void gen_pass(int floors, int passengers){
+public class Elev {
+
+    public static void gen_pass(int floors, double passengers, Q pass_pending){
         Random rand = new Random();
         if (rand.nextDouble() <= passengers){
             pass_pending.enQueue(rand.nextInt(floors + 1) + 0);
         }
     }
-}
 
-public class Elev {
     public static void main(String[]args) {
         //read from args[0] and configure the following elements:
         /**
@@ -170,33 +180,30 @@ public class Elev {
         int elev_Cap = 10; //elevatorCapacity
         int dur = 500; //duration
 
-        boolean state;
-
-        ArrayQ n = new ArrayQ(10);
-        n.enQueue(1);
-        System.out.println(n.peek());
-        n.enQueue(2);
-        System.out.println(n.peek());
-        n.deQueue();
-        System.out.println(n.peek());
-
+        boolean state = false;//internal variable
 
         try (FileReader reader = new FileReader(args[0])){
             Properties prop = new Properties();
             prop.load(reader);
 
             if (prop.containsKey("floors")) floors = Integer.parseInt(prop.getProperty("floors"));
+            if (floors < 2) floors = 32;
             if (prop.containsKey("passengers")) psgr = Double.parseDouble(prop.getProperty("passengers"));
+            if ((psgr < 0)||(psgr > 1.0)) psgr = 0.03;
             if (prop.containsKey("elevators")) elev_num = Integer.parseInt(prop.getProperty("elevators"));
+            if (elev_num < 1) elev_num = 1;
             if (prop.containsKey("elevatorCapacity")) elev_Cap = Integer.parseInt(prop.getProperty("elevatorCapacity"));
+            if (elev_Cap < 1) elev_Cap = 10;
             if (prop.containsKey("duration")) dur = Integer.parseInt(prop.getProperty("duration"));
+            if (dur < 1) dur = 500;
 
             if (prop.containsKey("structures")) structures = prop.getProperty("structures");
-            //todo: set a flag that tells whether or not to use linked structures or array structures
             if (structures.equals("linked")){
                 state = false;
-            } else {
+            } else if (structures.equals("array")){
                 state = true;
+            } else {
+                state = false;
             }
 
         } catch (FileNotFoundException e) {
@@ -207,6 +214,51 @@ public class Elev {
             //continue as normal
         }
 
+        /**-------------------- THIS IS WHERE THE FUN BEGINS --------------------**/
 
+        //Setting up the Elevators
+        AbstractList elevL;
+        if (state){
+            elevL = new ArrayList(elev_Cap);
+        } else {
+            elevL = new LinkedList();
+        }
+
+        for (int i = 0; i < elev_num; i++) {
+            Elevators nElev = new Elevators(1, 0, elev_Cap, state);
+            elevL.add(nElev);
+        }
+
+        //Setting up Floors
+        AbstractList flrL;
+        if (state){
+            flrL = new ArrayList(floors);
+        } else {
+            flrL = new LinkedList();
+        }
+
+        for (int i = 0; i < floors; i++) {
+            Floor inta = new Floor(state, 50);
+            flrL.add(inta);
+        }
+
+        /**
+         * There are 2 main lists, elevL and flrL, which are abstractLists
+         * elevL is a list of Elevators which each have a queue for passenger destinations
+         * flrL is a list of Floors which each have a queue for waiting passengers
+         */
+
+        for (int i = 0; i < dur; i++) {//each loop represents a tick
+
+            //Passenger Appearance
+            for (int j = 0; j < flrL.size(); j++) {
+                flrL.get(j);
+                gen_pass(floors, psgr, (Q) flrL.get(j));
+            }
+
+            //Elevator load/unload
+            
+
+        }
     }
 }
