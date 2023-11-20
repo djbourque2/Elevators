@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Queue;
 
+/* Unused Code removed for being overcomplicated
 class Q {//this is an unused/template parent class that will give more flexibility in adaptive queue implementations
     public void enQueue(Object i){}
     public Object deQueue(){return 0;}
@@ -97,6 +98,7 @@ class ArrayQ extends Q{
         return arr[front];
     }
 }
+ */
 
 class Elevators {
     //todo: set semi-configurable states/values, constructor
@@ -111,7 +113,7 @@ class Elevators {
     int curr_floor, num_pass, max_pass;
     boolean curr_direct, q_state;
     //Queue<Integer> passFloor_stack;//todo: make array versions and linked versions
-    Q passFloor_stack;
+    AbstractList passFloor_stack;
 
 
     public Elevators(int curr_floor, int num_pass, int max_pass, boolean q_state){
@@ -121,9 +123,9 @@ class Elevators {
         this.q_state = q_state;
         curr_direct = true;
         if (q_state){
-            passFloor_stack = new ArrayQ(max_pass);
+            passFloor_stack = new ArrayList(max_pass);
         } else {
-            passFloor_stack = new LinkedQ();
+            passFloor_stack = new LinkedList();
         }
     }
 
@@ -142,23 +144,54 @@ class Floor {
                     to the pass_pending stack
      */
 
-    Q pass_pending;
+    AbstractList pass_pending;
 
     public Floor(boolean s, int cap){//if true, array, if false, linked
         if (s){
-            pass_pending = new ArrayQ(cap);
+            pass_pending = new ArrayList<Integer>(cap);
         } else {
-            pass_pending = new LinkedQ();
+            pass_pending = new LinkedList();
         }
     }
 }
 
 public class Elev {
 
-    public static void gen_pass(int floors, double passengers, Q pass_pending){
+    public static void gen_pass(int floors, double passengers, int curr, AbstractList pass_pending){//todo: adapt to AbstractList instead of Q
         Random rand = new Random();
         if (rand.nextDouble() <= passengers){
-            pass_pending.enQueue(rand.nextInt(floors + 1) + 0);
+            int n = rand.nextInt(floors + 1) + 0;
+            if (n != curr){
+                pass_pending.add(n);
+            }
+        }
+    }
+
+    public static int find_pass(int cur, AbstractList<Integer> flr, boolean isGreater){
+        for (int i = 0; i < flr.size(); i++) {
+            if (isGreater){
+                if (flr.get(i) > cur) {
+                    return i;
+                }
+            } else {
+                if (flr.get(i) < cur) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+
+    public static void all_load(Elevators elevator, AbstractList flrs){
+        while (elevator.passFloor_stack.indexOf(elevator.curr_floor) != -1){//unloading phase
+            elevator.passFloor_stack.remove(elevator.passFloor_stack.indexOf(elevator.curr_floor));
+        }
+        Floor f = (Floor) flrs.get(elevator.curr_floor);
+        while (find_pass(elevator.curr_floor, f.pass_pending, elevator.curr_direct) != -1){//loading phase
+            int c = find_pass(elevator.curr_floor, f.pass_pending, elevator.curr_direct);
+            elevator.passFloor_stack.add(f.pass_pending.get(c));
+            f.pass_pending.remove(c);
         }
     }
 
@@ -181,6 +214,8 @@ public class Elev {
         int dur = 500; //duration
 
         boolean state = false;//internal variable
+
+        System.out.println("Test!!!");
 
         try (FileReader reader = new FileReader(args[0])){
             Properties prop = new Properties();
@@ -219,22 +254,22 @@ public class Elev {
         //Setting up the Elevators
         AbstractList elevL;
         if (state){
-            elevL = new ArrayList(elev_Cap);
+            elevL = new ArrayList<Elevators>(elev_Cap);
         } else {
-            elevL = new LinkedList();
+            elevL = new LinkedList<Elevators>();
         }
 
         for (int i = 0; i < elev_num; i++) {
-            Elevators nElev = new Elevators(1, 0, elev_Cap, state);
+            Elevators nElev = new Elevators(0, 0, elev_Cap, state);
             elevL.add(nElev);
         }
 
         //Setting up Floors
         AbstractList flrL;
         if (state){
-            flrL = new ArrayList(floors);
+            flrL = new ArrayList<Floor>(floors);
         } else {
-            flrL = new LinkedList();
+            flrL = new LinkedList<Floor>();
         }
 
         for (int i = 0; i < floors; i++) {
@@ -251,14 +286,39 @@ public class Elev {
         for (int i = 0; i < dur; i++) {//each loop represents a tick
 
             //Passenger Appearance
-            for (int j = 0; j < flrL.size(); j++) {
-                flrL.get(j);
-                gen_pass(floors, psgr, (Q) flrL.get(j));
+            for (int k = 0; k < flrL.size(); k++) {
+                Floor cur_f = (Floor) flrL.get(k);
+                gen_pass(floors, psgr, k, cur_f.pass_pending);
             }
 
-            //Elevator load/unload
-            
+            for (int j = 0; j < 5; j++) {//Elevator Stuff
 
+                //Elevator load/unload
+                for (int k = 0; k < elevL.size(); k++) {
+                    all_load((Elevators) elevL.get(k), flrL);
+                }
+
+                //Elevator advances forward/backward one floor
+                for (int k = 0; k < elevL.size(); k++) {
+                    if (((Elevators) elevL.get(k)).curr_direct){
+                        if (((Elevators) elevL.get(k)).curr_floor < floors){
+                            ((Elevators) elevL.get(k)).curr_floor++;
+                        } else {
+                            ((Elevators) elevL.get(k)).curr_direct = !((Elevators) elevL.get(k)).curr_direct;
+                            ((Elevators) elevL.get(k)).curr_floor--;
+                        }
+                    } else {
+                        if (((Elevators) elevL.get(k)).curr_floor > 0){
+                            ((Elevators) elevL.get(k)).curr_floor--;
+                        } else {
+                            ((Elevators) elevL.get(k)).curr_direct = !((Elevators) elevL.get(k)).curr_direct;
+                            ((Elevators) elevL.get(k)).curr_floor++;
+                        }
+                    }
+                }
+            }
         }
+
+        System.out.println("Finished");
     }
 }
