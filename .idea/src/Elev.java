@@ -100,8 +100,25 @@ class ArrayQ extends Q{
 }
  */
 
+class Passenger {
+    public int floor;
+    public long time;
+
+    public Passenger(int floor){
+        this.floor = floor;
+        time = System.currentTimeMillis();
+    }
+
+    public int getFloor() {
+        return floor;
+    }
+
+    public long getTime() {
+        return time;
+    }
+}
+
 class Elevators {
-    //todo: set semi-configurable states/values, constructor
     /*
      * curr_floor,  current floor position
      * curr_direct, current direction (up = true, down = false)
@@ -112,8 +129,8 @@ class Elevators {
     // queue state, determines whether passFloor_ is array-based or link-based,
     int curr_floor, num_pass, max_pass;
     boolean curr_direct, q_state;
-    //Queue<Integer> passFloor_stack;//todo: make array versions and linked versions
-    AbstractList passFloor_stack;
+
+    public AbstractList<Passenger> passFloor_stack;
 
 
     public Elevators(int curr_floor, int num_pass, int max_pass, boolean q_state){
@@ -132,6 +149,14 @@ class Elevators {
     public void change_direction(){
         curr_direct = !curr_direct;
     }
+
+    public AbstractList<Passenger> getPassFloor_stack() {
+        return passFloor_stack;
+    }
+
+    public void setPassFloor_stack(AbstractList<Passenger> passFloor_stack) {
+        this.passFloor_stack = passFloor_stack;
+    }
 }
 
 class Floor {
@@ -144,30 +169,20 @@ class Floor {
                     to the pass_pending stack
      */
 
-    AbstractList pass_pending;
+    public AbstractList<Passenger> pass_pending;
 
     public Floor(boolean s, int cap){//if true, array, if false, linked
         if (s){
             pass_pending = new ArrayList<Passenger>(cap);
         } else {
-            pass_pending = new LinkedList();
+            pass_pending = new LinkedList<Passenger>();
         }
-    }
-}
-
-class Passenger {
-    int floor;
-    long time;
-
-    public Passenger(int floor){
-        this.floor = floor;
-        time = System.currentTimeMillis();
     }
 }
 
 public class Elev {
 
-    public static void gen_pass(int floors, double passengers, int curr, AbstractList pass_pending){//todo: adapt to AbstractList instead of Q
+    public static void gen_pass(int floors, double passengers, int curr, AbstractList pass_pending){
         Random rand = new Random();
         if (rand.nextDouble() <= passengers){
             int n = rand.nextInt(floors + 1) + 0;
@@ -178,14 +193,14 @@ public class Elev {
         }
     }
 
-    public static int find_pass(int cur, AbstractList<Integer> flr, boolean isGreater){
+    public static int find_pass(int cur, AbstractList flr, boolean isGreater){
         for (int i = 0; i < flr.size(); i++) {
             if (isGreater){
-                if (flr.get(i) > cur) {
+                if (((Passenger)flr.get(i)).floor > cur) {
                     return i;
                 }
             } else {
-                if (flr.get(i) < cur) {
+                if (((Passenger)flr.get(i)).floor < cur) {
                     return i;
                 }
             }
@@ -194,10 +209,13 @@ public class Elev {
     }
 
     public static void all_load(Elevators elevator, AbstractList flrs){
-        while (elevator.passFloor_stack.indexOf(elevator.curr_floor) != -1){//unloading phase
-            System.out.println(System.currentTimeMillis()-((Passenger) flrs.get(elevator.curr_floor)).time);
-            elevator.passFloor_stack.remove(elevator.passFloor_stack.indexOf(elevator.curr_floor));
+        for (int i = 0; i < elevator.passFloor_stack.size(); i++) {//unloading phase
+            if (elevator.passFloor_stack.get(i).getFloor() == elevator.curr_floor){
+                System.out.println(System.currentTimeMillis() - elevator.passFloor_stack.get(i).getTime());
+                elevator.passFloor_stack.remove(i);
+            }
         }
+
         Floor f = (Floor) flrs.get(elevator.curr_floor);
         while (find_pass(elevator.curr_floor, f.pass_pending, elevator.curr_direct) != -1){//loading phase
             int c = find_pass(elevator.curr_floor, f.pass_pending, elevator.curr_direct);
@@ -223,8 +241,6 @@ public class Elev {
         int elev_num = 1; //elevators
         int elev_Cap = 10; //elevatorCapacity
         int dur = 500; //duration
-
-        //System.out.println("test");
 
         boolean state = false;//internal variable
 
@@ -283,7 +299,7 @@ public class Elev {
             flrL = new LinkedList<Floor>();
         }
 
-        for (int i = 0; i < -1; i++) {
+        for (int i = 0; i < floors; i++) {
             Floor inta = new Floor(state, 50);
             flrL.add(inta);
         }
@@ -302,9 +318,8 @@ public class Elev {
             }
 
             for (int j = 0; j < 5; j++) {//Elevator Stuff
-
                 //Elevator load/unload
-                for (int k = 0; k < elevL.size()-1; k++) {
+                for (int k = 0; k < elevL.size(); k++) {
                     all_load((Elevators) elevL.get(k), flrL);
                 }
 
