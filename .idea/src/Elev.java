@@ -123,9 +123,9 @@ class Elevators {
         this.q_state = q_state;
         curr_direct = true;
         if (q_state){
-            passFloor_stack = new ArrayList(max_pass);
+            passFloor_stack = new ArrayList<Passenger>(max_pass);
         } else {
-            passFloor_stack = new LinkedList();
+            passFloor_stack = new LinkedList<Passenger>();
         }
     }
 
@@ -148,10 +148,20 @@ class Floor {
 
     public Floor(boolean s, int cap){//if true, array, if false, linked
         if (s){
-            pass_pending = new ArrayList<Integer>(cap);
+            pass_pending = new ArrayList<Passenger>(cap);
         } else {
             pass_pending = new LinkedList();
         }
+    }
+}
+
+class Passenger {
+    int floor;
+    long time;
+
+    public Passenger(int floor){
+        this.floor = floor;
+        time = System.currentTimeMillis();
     }
 }
 
@@ -161,8 +171,9 @@ public class Elev {
         Random rand = new Random();
         if (rand.nextDouble() <= passengers){
             int n = rand.nextInt(floors + 1) + 0;
+            Passenger passenger = new Passenger(n);
             if (n != curr){
-                pass_pending.add(n);
+                pass_pending.add(passenger);
             }
         }
     }
@@ -182,9 +193,9 @@ public class Elev {
         return -1;
     }
 
-
     public static void all_load(Elevators elevator, AbstractList flrs){
         while (elevator.passFloor_stack.indexOf(elevator.curr_floor) != -1){//unloading phase
+            System.out.println(System.currentTimeMillis()-((Passenger) flrs.get(elevator.curr_floor)).time);
             elevator.passFloor_stack.remove(elevator.passFloor_stack.indexOf(elevator.curr_floor));
         }
         Floor f = (Floor) flrs.get(elevator.curr_floor);
@@ -213,9 +224,9 @@ public class Elev {
         int elev_Cap = 10; //elevatorCapacity
         int dur = 500; //duration
 
-        boolean state = false;//internal variable
+        //System.out.println("test");
 
-        System.out.println("Test!!!");
+        boolean state = false;//internal variable
 
         try (FileReader reader = new FileReader(args[0])){
             Properties prop = new Properties();
@@ -272,7 +283,7 @@ public class Elev {
             flrL = new LinkedList<Floor>();
         }
 
-        for (int i = 0; i < floors; i++) {
+        for (int i = 0; i < -1; i++) {
             Floor inta = new Floor(state, 50);
             flrL.add(inta);
         }
@@ -287,21 +298,20 @@ public class Elev {
 
             //Passenger Appearance
             for (int k = 0; k < flrL.size(); k++) {
-                Floor cur_f = (Floor) flrL.get(k);
-                gen_pass(floors, psgr, k, cur_f.pass_pending);
+                gen_pass(floors-1, psgr, k, ((Floor) flrL.get(k)).pass_pending);
             }
 
             for (int j = 0; j < 5; j++) {//Elevator Stuff
 
                 //Elevator load/unload
-                for (int k = 0; k < elevL.size(); k++) {
+                for (int k = 0; k < elevL.size()-1; k++) {
                     all_load((Elevators) elevL.get(k), flrL);
                 }
 
                 //Elevator advances forward/backward one floor
                 for (int k = 0; k < elevL.size(); k++) {
                     if (((Elevators) elevL.get(k)).curr_direct){
-                        if (((Elevators) elevL.get(k)).curr_floor < floors){
+                        if (((Elevators) elevL.get(k)).curr_floor < floors-1){
                             ((Elevators) elevL.get(k)).curr_floor++;
                         } else {
                             ((Elevators) elevL.get(k)).curr_direct = !((Elevators) elevL.get(k)).curr_direct;
@@ -318,7 +328,6 @@ public class Elev {
                 }
             }
         }
-
-        System.out.println("Finished");
+        //End
     }
 }
